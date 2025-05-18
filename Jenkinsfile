@@ -4,26 +4,26 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                bat 'npm install'
+                sh 'npm install'
             }
         }
         
         stage('Test') {
             steps {
-                bat 'echo "Tests would run here"'
+                sh 'echo "Tests would run here"'
             }
         }
         
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t poll-nimbus:latest .'
+                sh 'docker build -t poll-nimbus:latest .'
             }
         }
         
         stage('Deploy to Kubernetes') {
             steps {
-                bat 'kubectl apply -f kubernetes/deployment.yaml'
-                bat 'kubectl apply -f kubernetes/service.yaml'
+                sh 'kubectl apply -f kubernetes/deployment.yaml'
+                sh 'kubectl apply -f kubernetes/service.yaml'
             }
         }
     }
