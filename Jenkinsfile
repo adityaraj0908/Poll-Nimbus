@@ -7,7 +7,7 @@ pipeline {
     }
 
     tools {
-        nodejs 'NodeJS 18' // Jenkins tool name (configure in Jenkins Global Tools)
+        nodejs 'NodeJS 18' // Ensure this tool is configured in Jenkins
     }
 
     stages {
@@ -16,10 +16,8 @@ pipeline {
                 echo 'Installing prerequisites...'
                 sh '''
                 set -e
-                sudo apt-get update
-                sudo apt-get install -y docker.io || true
-                sudo systemctl start docker || true
-                sudo systemctl enable docker || true
+                apt-get update
+                apt-get install -y docker.io || true
                 '''
             }
         }
@@ -49,8 +47,8 @@ pipeline {
                 echo 'Building Docker image...'
                 sh '''
                 set -e
-                sudo docker build -t ${IMAGE_NAME}:latest .
-                sudo docker tag ${IMAGE_NAME}:latest ${IMAGE_NAME}:${IMAGE_TAG}
+                docker build -t ${IMAGE_NAME}:latest .
+                docker tag ${IMAGE_NAME}:latest ${IMAGE_NAME}:${IMAGE_TAG}
                 '''
             }
         }
@@ -64,9 +62,9 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'docker-creds', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                     sh '''
                     set -e
-                    echo "$DOCKER_PASSWORD" | sudo docker login -u "$DOCKER_USERNAME" --password-stdin
-                    sudo docker tag ${IMAGE_NAME}:${IMAGE_TAG} $DOCKER_USERNAME/${IMAGE_NAME}:${IMAGE_TAG}
-                    sudo docker push $DOCKER_USERNAME/${IMAGE_NAME}:${IMAGE_TAG}
+                    echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} $DOCKER_USERNAME/${IMAGE_NAME}:${IMAGE_TAG}
+                    docker push $DOCKER_USERNAME/${IMAGE_NAME}:${IMAGE_TAG}
                     '''
                 }
             }
@@ -90,8 +88,8 @@ pipeline {
         always {
             echo 'Cleaning up Docker containers...'
             sh '''
-            sudo docker stop poll-nimbus-container || true
-            sudo docker rm poll-nimbus-container || true
+            docker stop poll-nimbus-container || true
+            docker rm poll-nimbus-container || true
             '''
             cleanWs()
         }
