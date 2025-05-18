@@ -1,0 +1,65 @@
+<!-- views/index.ejs - Homepage -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poll Nimbus - Cloud Voting Made Simple</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <h1>Poll Nimbus</h1>
+        <p class="tagline">Cloud Voting Made Simple</p>
+      </div>
+      <nav>
+        <ul>
+          <li><a href="/" class="active">Home</a></li>
+          <li><a href="/create">Create Poll</a></li>
+        </ul>
+      </nav>
+    </header>
+    
+    <main>
+      <section class="hero">
+        <div class="hero-content">
+          <h2>Create and Share Polls Instantly</h2>
+          <p>Make decisions together with real-time voting</p>
+          <a href="/create" class="btn btn-primary">Create New Poll</a>
+        </div>
+      </section>
+      
+      <section class="active-polls">
+        <h2>Active Polls</h2>
+        <% if (polls.length === 0) { %>
+          <div class="empty-state">
+            <p>No polls created yet. Be the first to create one!</p>
+          </div>
+        <% } else { %>
+          <div class="polls-grid">
+            <% polls.forEach(poll => { %>
+              <div class="poll-card">
+                <h3><%= poll.title %></h3>
+                <p><%= poll.options.length %> options</p>
+                <p class="date">Created: <%= poll.created.toLocaleDateString() %></p>
+                <div class="poll-actions">
+                  <a href="/vote/<%= poll.id %>" class="btn btn-secondary">Vote</a>
+                  <a href="/results/<%= poll.id %>" class="btn btn-outline">Results</a>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        <% } %>
+      </section>
+    </main>
+    
+    <footer>
+      <p>&copy; 2025 Poll Nimbus - A Simple Voting Application</p>
+    </footer>
+  </div>
+  
+  <script src="/js/main.js"></script>
+</body>
+</html>

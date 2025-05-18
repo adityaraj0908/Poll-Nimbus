@@ -1,0 +1,58 @@
+<!-- views/vote.ejs - Voting Page -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vote - <%= poll.title %> - Poll Nimbus</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <h1>Poll Nimbus</h1>
+        <p class="tagline">Cloud Voting Made Simple</p>
+      </div>
+      <nav>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/create">Create Poll</a></li>
+        </ul>
+      </nav>
+    </header>
+    
+    <main>
+      <section class="vote-section">
+        <div class="poll-header">
+          <h2><%= poll.title %></h2>
+          <p class="poll-meta">Created on <%= poll.created.toLocaleDateString() %></p>
+        </div>
+        
+        <form action="/vote/<%= poll.id %>" method="POST" class="vote-form">
+          <div class="options-list">
+            <% poll.options.forEach((option, index) => { %>
+              <div class="option-item">
+                <input type="radio" name="option" id="option<%= index %>" value="<%= index %>" required>
+                <label for="option<%= index %>"><%= option.text %></label>
+              </div>
+            <% }); %>
+          </div>
+          
+          <button type="submit" class="btn btn-primary">Submit Vote</button>
+        </form>
+      </section>
+      
+      <div class="poll-actions">
+        <a href="/results/<%= poll.id %>" class="btn btn-outline">View Results Without Voting</a>
+      </div>
+    </main>
+    
+    <footer>
+      <p>&copy; 2025 Poll Nimbus - A Simple Voting Application</p>
+    </footer>
+  </div>
+  
+  <script src="/js/main.js"></script>
+</body>
+</html>

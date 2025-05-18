@@ -1,0 +1,85 @@
+<!-- views/create-poll.ejs - Create Poll Page -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Poll - Poll Nimbus</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <h1>Poll Nimbus</h1>
+        <p class="tagline">Cloud Voting Made Simple</p>
+      </div>
+      <nav>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/create" class="active">Create Poll</a></li>
+        </ul>
+      </nav>
+    </header>
+    
+    <main>
+      <section class="create-poll">
+        <h2>Create a New Poll</h2>
+        
+        <form action="/create" method="POST" id="poll-form">
+          <div class="form-group">
+            <label for="title">Poll Question</label>
+            <input type="text" id="title" name="title" required placeholder="What would you like to ask?">
+          </div>
+          
+          <div class="form-group">
+            <label for="options">Options (one per line)</label>
+            <textarea id="options" name="options" required rows="5" placeholder="Enter options here, one per line"></textarea>
+          </div>
+          
+          <div class="options-preview">
+            <h3>Preview</h3>
+            <ul id="options-list" class="options-list-preview"></ul>
+          </div>
+          
+          <button type="submit" class="btn btn-primary">Create Poll</button>
+        </form>
+      </section>
+    </main>
+    
+    <footer>
+      <p>&copy; 2025 Poll Nimbus - A Simple Voting Application</p>
+    </footer>
+  </div>
+  
+  <script>
+    // Live preview of options
+    const optionsTextarea = document.getElementById('options');
+    const optionsList = document.getElementById('options-list');
+    
+    optionsTextarea.addEventListener('input', updateOptionsPreview);
+    
+    function updateOptionsPreview() {
+      const options = optionsTextarea.value.split('\n').filter(option => option.trim() !== '');
+      optionsList.innerHTML = '';
+      
+      options.forEach(option => {
+        const li = document.createElement('li');
+        li.textContent = option;
+        optionsList.appendChild(li);
+      });
+      
+      if (options.length === 0) {
+        const li = document.createElement('li');
+        li.textContent = 'No options added yet';
+        li.classList.add('empty');
+        optionsList.appendChild(li);
+      }
+    }
+    
+    // Initialize preview
+    updateOptionsPreview();
+  </script>
+  <script src="/js/main.js"></script>
+</body>
+</html>
