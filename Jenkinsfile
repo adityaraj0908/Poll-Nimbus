@@ -1,77 +1,105 @@
 pipeline {
     agent any
-    
+
+    environment {
+        IMAGE_NAME = "poll-nimbus"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
+
+    tools {
+        nodejs 'NodeJS 18' // Jenkins tool name (configure in Jenkins Global Tools)
+    }
+
     stages {
         stage('Install Prerequisites') {
             steps {
+                echo 'Installing prerequisites...'
                 sh '''
-                echo "Installing prerequisites..."
-                apt-get update
-                
-                # Install Docker
-                echo "Installing Docker..."
-                apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
-                curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-                echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-                apt-get update
-                apt-get install -y docker-ce docker-ce-cli containerd.io
-                
-                # Install Node.js and npm
-                echo "Installing Node.js and npm..."
-                apt-get install -y nodejs npm
-                
-                # Verify installations
-                docker --version
-                node --version
-                npm --version
+                set -e
+                sudo apt-get update
+                sudo apt-get install -y docker.io || true
+                sudo systemctl start docker || true
+                sudo systemctl enable docker || true
                 '''
             }
         }
-        
-        stage('Build') {
+
+        stage('Install Dependencies') {
             steps {
-                sh 'npm install'
+                echo 'Installing npm packages...'
+                sh '''
+                set -e
+                npm install
+                '''
             }
         }
-        
-        stage('Test') {
+
+        stage('Run Tests') {
             steps {
-                sh 'echo "Tests would run here"'
+                echo 'Running tests...'
+                sh '''
+                set -e
+                npm test
+                '''
             }
         }
-        
+
         stage('Build Docker Image') {
             steps {
+                echo 'Building Docker image...'
                 sh '''
-                echo "Building Docker image..."
-                docker build -t poll-nimbus:latest .
-                docker images | grep poll-nimbus
+                set -e
+                sudo docker build -t ${IMAGE_NAME}:latest .
+                sudo docker tag ${IMAGE_NAME}:latest ${IMAGE_NAME}:${IMAGE_TAG}
                 '''
             }
         }
-        
-        stage('Deploy to Mock Kubernetes') {
+
+        stage('Push to Docker Registry') {
+            when {
+                expression { return env.DOCKER_USERNAME && env.DOCKER_PASSWORD }
+            }
             steps {
-                sh '''
-                echo "In a real environment, we would deploy to Kubernetes with:"
-                echo "kubectl apply -f kubernetes/deployment.yaml"
-                echo "kubectl apply -f kubernetes/service.yaml"
-                
-                echo "Simulating deployment with Docker..."
-                docker run -d --name poll-nimbus-container -p 3000:3000 poll-nimbus:latest || true
-                echo "Application deployed successfully!"
-                '''
+                echo 'Pushing Docker image to registry...'
+                withCredentials([usernamePassword(credentialsId: 'docker-creds', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    sh '''
+                    set -e
+                    echo "$DOCKER_PASSWORD" | sudo docker login -u "$DOCKER_USERNAME" --password-stdin
+                    sudo docker tag ${IMAGE_NAME}:${IMAGE_TAG} $DOCKER_USERNAME/${IMAGE_NAME}:${IMAGE_TAG}
+                    sudo docker push $DOCKER_USERNAME/${IMAGE_NAME}:${IMAGE_TAG}
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                echo 'Deploying to Kubernetes...'
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                    sh '''
+                    set -e
+                    kubectl apply -f kubernetes/deployment.yaml
+                    kubectl apply -f kubernetes/service.yaml
+                    '''
+                }
             }
         }
     }
-    
+
     post {
         always {
+            echo 'Cleaning up Docker containers...'
             sh '''
-            echo "Cleaning up..."
-            docker stop poll-nimbus-container || true
-            docker rm poll-nimbus-container || true
+            sudo docker stop poll-nimbus-container || true
+            sudo docker rm poll-nimbus-container || true
             '''
+            cleanWs()
+        }
+        success {
+            echo '✅ Pipeline completed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline failed. Check logs for errors.'
         }
     }
 }
