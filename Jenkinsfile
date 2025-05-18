@@ -1,29 +1,33 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:18'
-        }
-    }
-    
+    agent any
+
     stages {
         stage('Build') {
             steps {
-                sh 'npm install'
+                script {
+                    docker.image('node:18').inside {
+                        sh 'npm install'
+                    }
+                }
             }
         }
-        
+
         stage('Test') {
             steps {
-                sh 'echo "Tests would run here"'
+                script {
+                    docker.image('node:18').inside {
+                        sh 'echo "Tests would run here"'
+                    }
+                }
             }
         }
-        
+
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t poll-nimbus:latest .'
             }
         }
-        
+
         stage('Deploy to Kubernetes') {
             steps {
                 sh 'kubectl apply -f kubernetes/deployment.yaml'
